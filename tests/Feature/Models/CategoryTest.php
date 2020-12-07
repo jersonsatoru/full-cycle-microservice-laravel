@@ -37,6 +37,7 @@ class CategoryTest extends TestCase
         $this->assertEquals("Jerson", $c->name);
         $this->assertNull($c->description);
         $this->assertTrue($c->is_active);
+        $this->assertEquals(36, mb_strlen($c->id, 'utf-8'));
 
         $c = Category::create([
             'name' => 'Batata',
@@ -62,5 +63,16 @@ class CategoryTest extends TestCase
 
         $this->assertTrue($category->is_active);
         $this->assertEquals('new', $category->description);
+    }
+    
+    public function testDeleteCategory()
+    {
+        $category = Category::create(['name' => 'Terror']);
+        $categories = Category::all();
+        $this->assertCount(1, $categories);
+
+        $category->delete();
+        $categories = Category::all();
+        $this->assertCount(0, $categories);
     }
 }

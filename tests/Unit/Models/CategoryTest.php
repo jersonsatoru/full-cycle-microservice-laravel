@@ -17,7 +17,7 @@ class CategoryTest extends TestCase
 
     public function testCategoryFillableAttributes()
     {
-        $this->assertEquals(
+        $this->assertEqualsCanonicalizing(
             ['name', 'is_active', 'description'],
             $this->category->getFillable(),
         );
@@ -25,7 +25,7 @@ class CategoryTest extends TestCase
 
     public function testCategoryCastsAttributes()
     {
-        $this->assertEquals(
+        $this->assertEqualsCanonicalizing(
             ['id' => 'string', 'is_active' => 'boolean'],
             $this->category->getCasts(),
         );
