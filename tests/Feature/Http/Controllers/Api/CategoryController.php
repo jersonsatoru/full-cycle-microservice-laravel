@@ -6,12 +6,13 @@ use App\Models\Category;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Http\Response;
+use Tests\Traits\TestValidations;
 use Tests\TestCase;
 
 class CategoryControllerTest extends TestCase
 {
     
-    use DatabaseMigrations;
+    use DatabaseMigrations, TestValidations;
 
     public function testIndex()
     {
@@ -33,39 +34,35 @@ class CategoryControllerTest extends TestCase
     public function testCreateValidation()
     {
         $response = $this->json('POST', route('categories.store'), []);
-        $this->assertInvalidParametersNameRequiredCategoryCreation($response);
+        $this->assertRequiredFields($response, ['name']);
 
-        $response = $this->json('POST', route('categories.store', ['name' => str_repeat('s', 256), 'is_active' => 'a']));
-        $this->assertInvalidParametersMaxNameCharsAndIsActiveBooleanCategoryCreation($response);
+        $response = $this->json('POST', route('categories.store', ['is_active' => 'a']));
+        $this->assertValidation($response, ['is_active'], 'boolean');
+
+        $response = $this->json('POST', route('categories.store', ['name' => str_repeat('s', 256)]));
+        $this->assertMax255CharsFields($response, ['name']);
     }
 
-    protected function assertInvalidParametersNameRequiredCategoryCreation(TestResponse $response) 
+    protected function assertRequiredFields(TestResponse $response, array $validationErrors) 
     {
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
-             ->assertJsonValidationErrors(['name'])
-             ->assertJsonMissingValidationErrors('is_active')
-             ->assertJsonFragment([
-                 \Lang::get('validation.required', ['attribute' => 'name']),
-             ]);
+        $this->assertValidation($response, $validationErrors, 'required');
     }
 
-    protected function assertInvalidParametersMaxNameCharsAndIsActiveBooleanCategoryCreation(TestResponse $response)
+    protected function assertBooleanFields(TestResponse $response, array $validationErrors)
     {
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
-             ->assertJsonValidationErrors(['name', 'is_active'])
-             ->assertJsonFragment([
-                \Lang::get('validation.max.string', ['attribute' => 'name', 'max' => 255])
-             ])
-             ->assertJsonFragment([
-                \Lang::get('validation.boolean', ['attribute' => 'is active'])
-             ]);
+        $this->assertValidation($response, $validationErrors, 'boolean');
+    }
+
+    protected function assertMax255CharsFields(TestResponse $response, array $validationErrors)
+    {
+        $this->assertValidation($response, $validationErrors, 'max.string', ['max' => 255]);
     }
 
     public function testUpdateValidation()
     {
         $category = factory(Category::class)->create();
         $response = $this->json('PUT', route('categories.update', ['category' => $category->id]), []);
-        $this->assertInvalidParametersNameRequiredCategoryCreation($response);
+        $this->assertRequiredFields($response, ['name']);
 
         $category = factory(Category::class)->create();
         $response = $this->json(
@@ -73,7 +70,9 @@ class CategoryControllerTest extends TestCase
             route('categories.update', ['category' => $category->id]),
             ['name' => str_repeat('a', 256), 'is_active' => 'a'],
         );
-        $this->assertInvalidParametersMaxNameCharsAndIsActiveBooleanCategoryCreation($response);
+
+        $this->assertBooleanFields($response, ['is_active']);
+        $this->assertMax255CharsFields($response, ['name']);
     }
 
     public function testStoreCategory()
