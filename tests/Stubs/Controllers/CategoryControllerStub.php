@@ -20,4 +20,13 @@ class CategoryControllerStub extends BasicCrudController
             'is_active' => 'boolean',
         ];
     }
+
+    protected function rulesUpdate()
+    {
+        return [
+            'name' => 'required|max:255',
+            'description' => 'nullable',
+            'is_active' => 'boolean',
+        ];
+    }
 }
